@@ -2,7 +2,7 @@ import fire
 import boto3
 import os
 
-remained_lines_idx = [0,2,3,4,5]
+remained_lines_idxs = [0,2,3,4,5]
 
 class Translator():
   def __init__(self, profile, region='us-east-1'):
@@ -12,31 +12,36 @@ class Translator():
   def translate(self, base_dir):
     print('translate')
     print(base_dir)
-    source_path = os.path.join(base_dir, 'index.ja.md')
-    output_path = os.path.join(base_dir, 'index.en.md')
+    source_path = os.path.join(base_dir, '_index.ja.md')
+    output_path = os.path.join(base_dir, '_index.en.md')
+
+    output_lines = []
 
     with open(source_path, "r") as source:
-      txt = source.read()
-      lines = txt.split('\n')
+      lines = source.readlines()
+      idx = 0
+      for line in lines:
+        print(line)
+        if idx in remained_lines_idxs or line == '':
+          output_lines.append(line)
+        else:
+          result = self.translator.translate_text(
+            Text=line,
+            SourceLanguageCode="ja", 
+            TargetLanguageCode="en"
+          )
+          output_lines.append(result['TranslatedText'])
 
-      result = self.translator.translate_text(
-        Text=txt,
-        SourceLanguageCode="ja", 
-        TargetLanguageCode="en"
-      )
+        idx += 1
 
-      print(result['TranslatedText'])
+    print('\n'.join(output_lines))
 
-      result_lines = result['TranslatedText'].split('\n')
-      for idx in remained_lines_idx:
-        result_lines[idx] = lines[idx]
-
-      with open(output_path,'w') as output:
-        output.write('\n'.join(result_lines))
+    with open(output_path,'w') as output:
+      output.write('\n'.join(output_lines))
 
   def search_dir(self, base_dir):
     for entry_name in os.listdir(path=base_dir):
-      if entry_name == 'index.ja.md':
+      if entry_name == '_index.ja.md':
         self.translate(base_dir)
       if os.path.isdir(os.path.join(base_dir, entry_name)):
         self.search_dir(os.path.join(base_dir, entry_name))
