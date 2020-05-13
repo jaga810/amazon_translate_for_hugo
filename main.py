@@ -20,10 +20,17 @@ class Translator():
     with open(source_path, "r") as source:
       lines = source.readlines()
       idx = 0
+      isCode = False
       for line in lines:
         print(line)
-        if idx in remained_lines_idxs or line == '':
-          output_lines.append(line)
+        if idx in remained_lines_idxs or line == '' or '{{< figure' in line or '![](' in line or '{{%' in line:
+          output_lines.append(line.replace('\n',''))
+        elif '```' in line or isCode:
+          output_lines.append(line.replace('\n', ''))
+          if '```' in line and isCode:
+            isCode = False
+          else:
+            isCode = True
         else:
           result = self.translator.translate_text(
             Text=line,
